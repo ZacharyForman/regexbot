@@ -32,10 +32,33 @@ func (b *Buffer) prepend(msg Message) {
 	}
 }
 
-//TODO: This is lazy, need to actually parse it.
 func splitRegex(s string) (string, string) {
-	strs := strings.Split(s, "/")
-	return strs[1], strs[2]
+	var pos int
+	var escaped bool
+	var slashes []int
+	//find section 1
+	for pos = 0; pos < len(s); pos++ {
+		if s[pos] == '\\' && !escaped {
+			s = s[:pos-1] + s[pos:]
+			escaped = true
+		} else if s[pos] == '\\' && escaped {
+			s = s[:pos] + "\\" +  s[pos:]
+		} else {
+			escaped = false
+		}
+		if s[pos] == '/' && !escaped {
+			slashes = append(slashes, pos)
+		}
+	}
+	if s[len(s)-1] != '/' {
+		s = s + "/"
+		slashes = append(slashes, len(s)-1)
+	}
+	if len(slashes) < 2 {
+		return "", ""
+	}
+	fmt.Println(s[slashes[0]+1:slashes[1]], s[slashes[1]+1:slashes[len(slashes)-1]])
+	return s[slashes[0]+1 : slashes[1]], s[slashes[1]+1 : slashes[len(slashes)-1]]
 }
 
 func (b *Buffer) TranslationFindMatch(trans map[rune]rune) (int, Message) {
@@ -171,9 +194,9 @@ func main() {
 		return
 	}
 	//connect to the server
-	fmt.Fprintf(conn, "USER "+"MINING_BOT"+" 8 * :"+"MINING_BOT"+"\n")
-	fmt.Fprintf(conn, "NICK "+"MINING_BOT"+"\n")
-	fmt.Fprintf(conn, "JOIN #compsci.test\n")
+	fmt.Fprintf(conn, "USER "+"asregexbot"+" 8 * :"+"asregexbot"+"\n")
+	fmt.Fprintf(conn, "NICK "+"asregexbot"+"\n")
+	fmt.Fprintf(conn, "JOIN #vnc-test\n")
 	go TerminalControl(conn)
 	reader := bufio.NewReader(conn)
 	chanchans := make(map[string]chan Message)
